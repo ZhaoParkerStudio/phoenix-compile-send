@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --primary: #1E88E5;
+      --primary-light: #42A5F5;
+      --primary-dark: #1565C0;
+      --gold: #FFB81C;
+      --bg: #F5F7FA;
+      --card: #FFFFFF;
+      --border: #E0E4E8;
+      --text: #333333;
+      --text-secondary: #666666;
+      --btn-primary-text: #FFFFFF;
+      --btn-disabled-bg: #CCCCCC;
+      --warning-bg: #FFF3E0;
+      --warning-text: #E65100;
+      --gold-bg: #FFFDE7;
+      --gold-text: #F57F17;
+      --radius: 8px;
+      --font: "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif;
+    }
+
+    body.theme-blue {}
+    body.theme-red {
+      --primary: #D40000;
+      --primary-light: #FF5252;
+      --primary-dark: #B71C1C;
+    }
+    body.theme-green {
+      --primary: #2E7D32;
+      --primary-light: #4CAF50;
+      --primary-dark: #1B5E20;
+    }
+    body.theme-dark {
+      --primary: #424242;
+      --primary-light: #616161;
+      --primary-dark: #212121;
+      --bg: #303030;
+      --card: #424242;
+      --border: #616161;
+      --text: #FFFFFF;
+      --text-secondary: #BDBDBD;
+      --btn-primary-text: #FFFFFF;
+      --btn-disabled-bg: #757575;
+      --warning-bg: #424242;
+      --warning-text: #FFB74D;
+      --gold-bg: #424242;
+      --gold-text: #FFD54F;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      padding: 16px;
+      width: 520px;
+      min-height: 550px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .header h3 {
+      font-size: 18px;
+      color: var(--primary);
+      font-weight: 600;
+      margin: 0;
+    }
+    .header .subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-left: auto;
+    }
+
+    .task-selector { margin-bottom: 15px; }
+    .task-selector select, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card-label {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 13px;
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      transition: border 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--card);
+    }
+
+    .row { display: flex; gap: 10px; align-items: center; }
+    .row > * { flex: 1; }
+
+    .attachments { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+    .thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb .del {
+      position: absolute;
+      top: -4px; right: -4px;
+      background: rgba(212,0,0,0.8);
+      color: #fff;
+      border-radius: 50%;
+      width: 18px; height: 18px;
+      text-align: center;
+      font-size: 12px;
+      cursor: pointer;
+      line-height: 18px;
+      transition: background 0.2s;
+    }
+    .thumb .del:hover { background: var(--primary); }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 500;
+      transition: opacity 0.2s, transform 0.1s, background 0.2s;
+    }
+    button:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--primary);
+      color: var(--btn-primary-text);
+    }
+    .btn-primary:disabled {
+      background: var(--btn-disabled-bg);
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+    .btn-warning {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+    .btn-gold {
+      border: 1px solid var(--gold);
+      background: var(--gold-bg);
+      color: var(--gold-text);
+    }
+
+    .hidden { display: none; }
+
+    #status {
+      margin-top: 12px;
+      font-size: 13px;
+      padding: 8px;
+      border-radius: var(--radius);
+      background: var(--card);
+      color: var(--text-secondary);
+    }
+
+    .radio-group { display: flex; gap: 20px; margin: 8px 0; }
+    .radio-group label {
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body class="theme-blue">
+  <div class="header">
+    <h3>📨 鳳凰編譯·快信</h3>
+    <span class="subtitle">北京編譯中心</span>
+  </div>
+
+  <div id="taskSelector" class="task-selector">
+    <label>目前任務</label>
+    <select id="taskTypeSelect">
+      <option value="newsBg">GFX - 新聞底圖</option>
+      <option value="transparent">GFX - 透明底圖</option>
+      <option value="mapStatic">GFX - 靜地圖</option>
+      <option value="mapAnimated">GFX - 動地圖</option>
+      <option value="ngb">NGB 任務（單次）</option>
+    </select>
+  </div>
+
+  <!-- GFX 面板 -->
+  <div id="gfxPanel">
+    <div class="card">
+      <div class="card-label">收件人</div>
+      <select id="recipientGroup"></select>
+      <input type="text" id="customRecipientGfx" placeholder="請輸入郵件地址，多個以逗號分隔" style="display:none; margin-top:8px;">
+    </div>
+
+    <div class="card">
+      <div class="card-label">📎 附件 (<span id="attachCount">0</span>)</div>
+      <div class="attachments" id="attachmentList"></div>
+      <div class="row" style="margin-top:8px;">
+        <button id="addLocalBtn" class="btn-secondary">📁 添加本地圖片</button>
+        <button id="addUrlBtn" class="btn-secondary">🔗 添加網頁圖片</button>
+      </div>
+      <input type="text" id="urlInput" placeholder="輸入圖片 URL" class="hidden" style="margin-top:8px;">
+      <button id="confirmUrlBtn" class="hidden btn-secondary">確認添加</button>
+    </div>
+
+    <div class="card">
+      <label>📝 內容描述（可使用 AI 建議）</label>
+      <div class="row">
+        <input type="text" id="gfxDescription" placeholder="點擊 AI 建議或手動輸入" style="flex:1;">
+        <button id="gfxSuggestionBtn" class="btn-gold" style="flex:0 0 auto;">💡 AI建議</button>
+        <button id="gfxAnalyzeBtn" class="btn-gold" style="flex:0 0 auto;">🖼️ AI讀圖</button>
+      </div>
+
+      <label>🔖 SLUG（AI 建議可選）</label>
+      <input type="text" id="slug" placeholder="六字以內">
+
+      <label>💾 存放位置</label>
+      <div class="radio-group">
+        <label><input type="radio" name="storageLocation" value="H盤" checked> H盤</label>
+        <label><input type="radio" name="storageLocation" value="G盤"> G盤</label>
+      </div>
+
+      <!-- 新增：節目使用時間 -->
+      <label>⏰ 節目使用時間（可選）</label>
+      <input type="text" id="airTime" placeholder="系統自動推薦下個整點，可手動修改">
+
+      <label>📌 額外要求（如有地點、路線、動畫效果等需求，請在此詳細說明）</label>
+      <textarea id="extra" rows="3" placeholder="例如：地點、Key出地名、爆炸效果等"></textarea>
+    </div>
+
+    <div class="card">
+      <label>✉️ 主題</label>
+      <input type="text" id="gfxSubject" placeholder="可直接輸入主題">
+      <label>📄 正文</label>
+      <textarea id="gfxBody" rows="5" placeholder="可直接輸入正文內容"></textarea>
+    </div>
+
+    <div class="row">
+      <button id="gfxGenerateBtn" class="btn-primary">🤖 AI 生成郵件</button>
+      <button id="gfxSendBtn" class="btn-primary">✉️ 發送</button>
+      <button id="gfxClearBtn" class="btn-warning">🗑️ 清除隊列</button>
+    </div>
+  </div>
+
+  <!-- NGB 面板 -->
+  <div id="ngbPanel" class="hidden">
+    <div class="card">
+      <div class="card-label">收件人</div>
+      <select id="ngbRecipient"></select>
+      <input type="text" id="customRecipientNgb" placeholder="請輸入郵件地址，多個以逗號分隔" style="display:none; margin-top:8px;">
+    </div>
+
+    <div class="card">
+      <label>任務類型</label>
+      <input type="text" id="ngbTaskDisplay">
+
+      <label>連結</label>
+      <input type="text" id="ngbLink">
+
+      <label>📝 內容描述（可使用 AI 建議）</label>
+      <div class="row">
+        <input type="text" id="ngbDescription" placeholder="點擊 AI 建議或手動輸入" style="flex:1;">
+        <button id="ngbSuggestionBtn" class="btn-gold" style="flex:0 0 auto;">💡 AI建議</button>
+      </div>
+
+      <label>💾 存放位置</label>
+      <div class="radio-group">
+        <label><input type="radio" name="ngbStorage" value="OTHER" checked> OTHER</label>
+        <label><input type="radio" name="ngbStorage" value="記者站"> 記者站</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>✉️ 主題</label>
+      <input type="text" id="ngbSubject" placeholder="可直接輸入主題">
+      <label>📄 正文</label>
+      <textarea id="ngbBody" rows="5" placeholder="可直接輸入正文內容"></textarea>
+    </div>
+
+    <div class="row">
+      <button id="ngbGenerateBtn" class="btn-primary">🤖 AI 生成郵件</button>
+      <button id="ngbSendBtn" class="btn-primary">✉️ 發送</button>
+    </div>
+  </div>
+
+  <div id="status"></div>
+  <input type="file" id="fileInput" multiple style="display:none" accept="image/*">
+
+  <script src="popup.js"></script>
+</body>
+</html>

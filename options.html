@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --primary: #1E88E5;
+      --primary-dark: #1565C0;
+      --bg: #F5F7FA;
+      --card: #FFFFFF;
+      --border: #E0E4E8;
+      --text: #333333;
+      --text-secondary: #666666;
+      --radius: 8px;
+      --font: "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif;
+    }
+
+    body.theme-blue {}
+    body.theme-red {
+      --primary: #D40000;
+      --primary-dark: #B71C1C;
+    }
+    body.theme-green {
+      --primary: #2E7D32;
+      --primary-dark: #1B5E20;
+    }
+    body.theme-dark {
+      --primary: #424242;
+      --primary-dark: #212121;
+      --bg: #303030;
+      --card: #424242;
+      --border: #616161;
+      --text: #FFFFFF;
+      --text-secondary: #BDBDBD;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font);
+      font-size: 14px;
+      max-width: 650px;
+      margin: 30px auto;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    h2 { color: var(--primary); }
+    h3 { margin-top: 24px; border-bottom: 2px solid var(--primary); padding-bottom: 4px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      margin-top: 4px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: inherit;
+      background: var(--card);
+      color: var(--text);
+    }
+    .inline { display: flex; gap: 10px; align-items: center; }
+    .inline input { flex: 1; }
+    .group-item {
+      background: var(--card);
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+    }
+    button {
+      padding: 8px 15px;
+      margin: 10px 5px 0 0;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-save { font-size: 16px; }
+    .btn-link {
+      background: none;
+      color: var(--primary);
+      text-decoration: underline;
+      font-size: 14px;
+      padding: 0;
+      margin: 0;
+    }
+    .hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body class="theme-blue">
+  <h2>⚙️ 鳳凰編譯·快信 設定</h2>
+
+  <h3>✉️ 寄件人資訊</h3>
+  <label>寄件人名稱</label>
+  <input type="text" id="fromName" placeholder="Parker">
+  <label>寄件人簽名（部門／分機號，將顯示在郵件末尾）</label>
+  <input type="text" id="signature" placeholder="資訊台北京編譯中心 / 7-7164">
+
+  <h3>🤖 AI 生成設定</h3>
+  <label>DeepSeek API Key</label>
+  <input type="password" id="deepseekKey" placeholder="請輸入 DeepSeek API 金鑰">
+
+  <h3>🖼️ 圖片理解 API（用於 AI 讀圖）</h3>
+  <label>視覺模型 API Key（目前支援智譜 GLM-4V-Flash）</label>
+  <input type="password" id="visionApiKey" placeholder="可選填，獲取免費 Key 後填入">
+  <div class="hint">請至 <a href="https://open.bigmodel.cn/" target="_blank">智譜AI開放平台</a> 註冊並獲取 API Key。<br>留空則禁用「AI 讀圖」功能。</div>
+
+  <h3>🎨 主題設定</h3>
+  <label>選擇主題</label>
+  <select id="themeSelect">
+    <option value="blue">海洋藍</option>
+    <option value="red">鳳凰紅</option>
+    <option value="green">森林綠</option>
+    <option value="dark">暗夜黑</option>
+  </select>
+
+  <h3>👥 收件人組管理</h3>
+  <div id="groupsContainer"></div>
+  <button id="addGroupBtn">➕ 新增收件人組</button>
+
+  <!-- 高级设置折叠区 -->
+  <div style="margin-top: 30px;">
+    <button id="toggleAdvancedBtn" class="btn-link">⚙️ 高級設定（通常無需修改）</button>
+  </div>
+
+  <div id="advancedSettings" class="hidden">
+    <h3>📡 EmailJS 發送設定</h3>
+    <p>使用 EmailJS 作為郵件發送中繼。</p>
+    <label>EmailJS Public Key</label>
+    <input type="text" id="emailjsPublicKey" placeholder="user_xxxxx...">
+    <label>EmailJS Service ID</label>
+    <input type="text" id="emailjsServiceID" placeholder="service_xxxxx">
+    <label>EmailJS Template ID</label>
+    <input type="text" id="emailjsTemplateID" placeholder="template_xxxxx">
+
+    <h3>🖼️ Cloudinary 圖床設定（圖片將轉為連結發送）</h3>
+    <label>Cloudinary Cloud Name</label>
+    <input type="text" id="cloudName" placeholder="dcg3rnrmq">
+    <label>Cloudinary API Key</label>
+    <input type="text" id="cloudApiKey" placeholder="521787134687759">
+    <div class="hint">註冊 Cloudinary 後在 Dashboard 可獲取以上兩項。<br>注意：無需填寫 API Secret。</div>
+  </div>
+
+  <br>
+  <button id="saveBtn" class="btn-save">💾 儲存所有設定</button>
+  <span id="statusMsg" style="color:green; margin-left:10px;"></span>
+
+  <script src="options.js"></script>
+</body>
+</html>

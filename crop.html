@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; }
+    body {
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+      font-family: "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif;
+    }
+    #canvas {
+      display: block;
+      max-width: 100vw;
+      max-height: 100vh;
+      cursor: crosshair;
+    }
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: #fff;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 100;
+    }
+    #info {
+      font-size: 13px;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .btn-crop { background: #1E88E5; color: #fff; }
+    .btn-cancel { background: #666; color: #fff; }
+
+    /* 任务选择面板 */
+    #taskPanel {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+    }
+    #taskPanel .content {
+      background: #fff;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    #previewImg {
+      max-width: 200px;
+      max-height: 200px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    .task-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .task-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+    .task-btn:hover { opacity: 0.9; }
+    .task-news { background: #1E88E5; color: #fff; }
+    .task-transparent { background: #43A047; color: #fff; }
+    .task-map-static { background: #FB8C00; color: #fff; }
+    .task-map-animated { background: #8E24AA; color: #fff; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <span id="info">拖拽選取區域</span>
+    <button class="btn-crop" id="cropBtn" disabled>裁剪並選擇任務</button>
+    <button class="btn-cancel" id="cancelBtn">取消</button>
+  </div>
+
+  <div id="taskPanel">
+    <div class="content">
+      <img id="previewImg" alt="預覽" />
+      <h3 style="margin-bottom:15px;">選擇圖形任務</h3>
+      <div class="task-buttons">
+        <button class="task-btn task-news" data-task="newsBg">新聞底圖</button>
+        <button class="task-btn task-transparent" data-task="transparent">透明底圖</button>
+        <button class="task-btn task-map-static" data-task="mapStatic">靜地圖</button>
+        <button class="task-btn task-map-animated" data-task="mapAnimated">動地圖</button>
+      </div>
+      <button class="btn-cancel" style="margin-top:15px;" id="cancelTaskBtn">取消</button>
+    </div>
+  </div>
+
+  <script src="crop.js"></script>
+</body>
+</html>
