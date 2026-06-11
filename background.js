@@ -13,10 +13,11 @@ const NGB_TASKS = {
 
 // 主题色映射
 const THEME_COLORS = {
+  warm: '#1A1A18',
   blue: '#1E88E5',
   red: '#D40000',
   green: '#2E7D32',
-  dark: '#424242'
+  dark: '#C2C0B6'
 };
 
 // 初始化菜单
@@ -29,10 +30,10 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({ id: "gfxMapAnimated", title: "📤 做動地圖", contexts: ["image"] });
     chrome.contextMenus.create({ id: "cropScreen", title: "📸 截取屏幕區域", contexts: ["page", "image"] });
 
-    // 视频右键：直接“視頻下載（NGB）”
+    // 视频右键
     chrome.contextMenus.create({ id: "ngbVideo", title: "📤 視頻下載（NGB）", contexts: ["video"] });
 
-    // 页面右键：录屏、視頻下載、截屏
+    // 页面右键
     chrome.contextMenus.create({ id: "ngbRecord", title: "📤 錄屏（NGB）", contexts: ["page"] });
     chrome.contextMenus.create({ id: "ngbDownloadPageVideo", title: "📤 視頻下載（NGB）", contexts: ["page"] });
 
@@ -44,9 +45,9 @@ chrome.runtime.onInstalled.addListener(() => {
     });
   });
 
-  // 设置默认主题色（若尚未设置）
+  // 设置默认主题色
   chrome.storage.sync.get('theme', (items) => {
-    const theme = items.theme || 'blue';
+    const theme = items.theme || 'warm';
     chrome.storage.local.set({ currentTheme: theme });
     updateBadge();
   });
@@ -133,7 +134,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       message: `GFX - ${taskNames[taskType]}（共 ${queue.length} 張）`
     });
 
-    // 自动打开管理面板（如果尚未打开）
+    // 自动打开管理面板
     const popupUrl = chrome.runtime.getURL("popup.html");
     try {
       const existingWindows = await chrome.windows.getAll({ populate: true });
@@ -213,11 +214,10 @@ async function startCrop() {
       title: '截屏失敗',
       message: err.message || '發生未知錯誤'
     });
-    console.error('截屏失败', err);
   }
 }
 
-// 更新图标角标（动态颜色）
+// 更新图标角标
 async function updateBadge() {
   const allKeys = [
     GFX_TASKS.newsBg, GFX_TASKS.transparent, GFX_TASKS.mapStatic, GFX_TASKS.mapAnimated
@@ -226,9 +226,8 @@ async function updateBadge() {
   let total = 0;
   allKeys.forEach(k => total += (data[k] || []).length);
   
-  // 获取当前主题色
   const { currentTheme } = await chrome.storage.local.get('currentTheme');
-  const themeColor = THEME_COLORS[currentTheme] || THEME_COLORS.blue;
+  const themeColor = THEME_COLORS[currentTheme] || THEME_COLORS.warm;
   
   if (total > 0) {
     chrome.action.setBadgeText({ text: total.toString() });
@@ -286,28 +285,33 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
-  // 新截屏流程：直接添加到指定任务队列
-  if (request.action === 'addCroppedToTask') {
-    const { dataUrl, taskType } = request;
-    const key = `gfxQueue_${taskType}`;
-    chrome.storage.local.get(key, (result) => {
-      const queue = result[key] || [];
-      queue.push({
-        url: dataUrl,
-        alt: '',
-        pageTitle: '',
-        timestamp: Date.now()
-      });
-      chrome.storage.local.set({ [key]: queue }, () => {
-        updateBadge();
-        sendResponse({ success: true });
+  // 接收裁剪完成的通知，从 storage 读取图片数据
+  if (request.action === 'croppedImageReady') {
+    const { taskType } = request;
+    chrome.storage.local.get('tempCroppedImage', (result) => {
+      if (!result.tempCroppedImage) {
+        sendResponse({ success: false, error: '未找到裁剪圖片' });
+        return;
+      }
+      const key = `gfxQueue_${taskType}`;
+      chrome.storage.local.get(key, (queueResult) => {
+        const queue = queueResult[key] || [];
+        queue.push({
+          url: result.tempCroppedImage,
+          alt: '',
+          pageTitle: '',
+          timestamp: Date.now()
+        });
+        chrome.storage.local.set({ [key]: queue, tempCroppedImage: null }, () => {
+          updateBadge();
+          sendResponse({ success: true });
+        });
       });
     });
     return true;
   }
-  // 更新主题色
   if (request.action === 'updateBadgeTheme') {
-    const theme = request.theme || 'blue';
+    const theme = request.theme || 'warm';
     chrome.storage.local.set({ currentTheme: theme }, () => {
       updateBadge();
       sendResponse({ success: true });
@@ -325,11 +329,10 @@ chrome.action.onClicked.addListener(() => {
   });
 });
 
-// 启动时根据存储的主题更新角标
 chrome.storage.local.get('currentTheme', (items) => {
   if (!items.currentTheme) {
     chrome.storage.sync.get('theme', (syncItems) => {
-      const theme = syncItems.theme || 'blue';
+      const theme = syncItems.theme || 'warm';
       chrome.storage.local.set({ currentTheme: theme });
       updateBadge();
     });

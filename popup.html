@@ -4,63 +4,80 @@
   <meta charset="UTF-8">
   <style>
     :root {
+      --primary: #1A1A18;
+      --primary-light: #2D2D28;
+      --primary-dark: #0F0F0E;
+      --gold: #C17D4B;
+      --bg: #FAF9F5;
+      --card: #FFFFFF;
+      --border: rgba(0,0,0,0.08);
+      --text: #1A1A18;
+      --text-secondary: #5C5C57;
+      --btn-primary-text: #FFFFFF;
+      --btn-disabled-bg: #E5E3DC;
+      --warning-bg: #FDF5F5;
+      --warning-text: #A73D39;
+      --gold-bg: #FEF9F0;
+      --gold-text: #8B4C2E;
+      --radius: 10px;
+      --shadow: 0 1px 2px rgba(0,0,0,0.04);
+      --font: "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif;
+    }
+
+    body.theme-warm {}
+    body.theme-blue {
       --primary: #1E88E5;
       --primary-light: #42A5F5;
       --primary-dark: #1565C0;
       --gold: #FFB81C;
-      --bg: #F5F7FA;
-      --card: #FFFFFF;
-      --border: #E0E4E8;
-      --text: #333333;
-      --text-secondary: #666666;
-      --btn-primary-text: #FFFFFF;
-      --btn-disabled-bg: #CCCCCC;
-      --warning-bg: #FFF3E0;
-      --warning-text: #E65100;
-      --gold-bg: #FFFDE7;
-      --gold-text: #F57F17;
-      --radius: 8px;
-      --font: "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif;
     }
-
-    body.theme-blue {}
     body.theme-red {
       --primary: #D40000;
       --primary-light: #FF5252;
       --primary-dark: #B71C1C;
+      --gold: #FFB81C;
     }
     body.theme-green {
       --primary: #2E7D32;
       --primary-light: #4CAF50;
       --primary-dark: #1B5E20;
+      --gold: #FFB81C;
     }
     body.theme-dark {
-      --primary: #424242;
-      --primary-light: #616161;
-      --primary-dark: #212121;
-      --bg: #303030;
-      --card: #424242;
-      --border: #616161;
-      --text: #FFFFFF;
-      --text-secondary: #BDBDBD;
-      --btn-primary-text: #FFFFFF;
-      --btn-disabled-bg: #757575;
-      --warning-bg: #424242;
-      --warning-text: #FFB74D;
-      --gold-bg: #424242;
-      --gold-text: #FFD54F;
+      --primary: #C2C0B6;
+      --primary-light: #9C9A92;
+      --primary-dark: #FAF9F5;
+      --bg: #30302E;
+      --card: #262624;
+      --border: rgba(255,255,255,0.08);
+      --text: #FAF9F5;
+      --text-secondary: #9C9A92;
+      --btn-primary-text: #141413;
+      --btn-disabled-bg: #3D3D3A;
+      --warning-bg: #602A28;
+      --warning-text: #EE8884;
+      --gold-bg: #483A0F;
+      --gold-text: #D1A041;
+      --shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: var(--font);
-      font-size: 14px;
+      font-size: 15px;
+      line-height: 1.6;
       color: var(--text);
       background: var(--bg);
       padding: 16px;
       width: 520px;
       min-height: 550px;
       transition: background 0.3s, color 0.3s;
+      animation: fadeScaleIn 0.2s ease-out;
+    }
+
+    @keyframes fadeScaleIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
     }
 
     .header {
@@ -71,34 +88,48 @@
     }
     .header h3 {
       font-size: 18px;
-      color: var(--primary);
       font-weight: 600;
+      color: var(--primary);
       margin: 0;
     }
     .header .subtitle {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-secondary);
       margin-left: auto;
+    }
+
+    .setup-warning {
+      background: #FDF5F5;
+      border: 0.5px solid rgba(167,61,57,0.3);
+      padding: 10px;
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      color: #A73D39;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .task-selector { margin-bottom: 15px; }
     .task-selector select, select {
       width: 100%;
-      padding: 8px;
-      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border: 0.5px solid var(--border);
       border-radius: var(--radius);
       background: var(--card);
       font-family: var(--font);
-      font-size: 14px;
+      font-size: 15px;
       color: var(--text);
     }
 
     .card {
       background: var(--card);
       border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      border: 0.5px solid var(--border);
     }
     .card-label {
       font-weight: 600;
@@ -112,17 +143,17 @@
     label {
       display: block;
       font-weight: 600;
-      font-size: 13px;
-      margin-top: 12px;
+      font-size: 14px;
+      margin-top: 14px;
       margin-bottom: 4px;
     }
     input, textarea {
       width: 100%;
-      padding: 8px;
-      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border: 0.5px solid var(--border);
       border-radius: var(--radius);
       font-family: var(--font);
-      font-size: 14px;
+      font-size: 15px;
       background: var(--bg);
       color: var(--text);
       transition: border 0.2s;
@@ -142,14 +173,14 @@
       height: 60px;
       border-radius: var(--radius);
       overflow: hidden;
-      border: 1px solid var(--border);
+      border: 0.5px solid var(--border);
       position: relative;
     }
     .thumb img { width: 100%; height: 100%; object-fit: cover; }
     .thumb .del {
       position: absolute;
       top: -4px; right: -4px;
-      background: rgba(212,0,0,0.8);
+      background: rgba(167,61,57,0.8);
       color: #fff;
       border-radius: 50%;
       width: 18px; height: 18px;
@@ -159,16 +190,16 @@
       line-height: 18px;
       transition: background 0.2s;
     }
-    .thumb .del:hover { background: var(--primary); }
+    .thumb .del:hover { background: var(--warning-text); }
 
     button {
-      padding: 8px 16px;
+      padding: 10px 16px;
       border: none;
       border-radius: var(--radius);
       cursor: pointer;
       font-family: var(--font);
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 15px;
+      font-weight: 600;
       transition: opacity 0.2s, transform 0.1s, background 0.2s;
     }
     button:active { transform: scale(0.98); }
@@ -178,18 +209,20 @@
     }
     .btn-primary:disabled {
       background: var(--btn-disabled-bg);
+      color: var(--text-secondary);
       cursor: not-allowed;
     }
     .btn-secondary {
-      background: var(--border);
+      background: #F0EEE7;
       color: var(--text);
+      border: 0.5px solid var(--border);
     }
     .btn-warning {
       background: var(--warning-bg);
       color: var(--warning-text);
     }
     .btn-gold {
-      border: 1px solid var(--gold);
+      border: 0.5px solid var(--gold);
       background: var(--gold-bg);
       color: var(--gold-text);
     }
@@ -198,11 +231,12 @@
 
     #status {
       margin-top: 12px;
-      font-size: 13px;
-      padding: 8px;
+      font-size: 14px;
+      padding: 10px;
       border-radius: var(--radius);
       background: var(--card);
       color: var(--text-secondary);
+      border: 0.5px solid var(--border);
     }
 
     .radio-group { display: flex; gap: 20px; margin: 8px 0; }
@@ -214,12 +248,103 @@
       margin: 0;
       white-space: nowrap;
     }
+
+    /* 动画容器 */
+    #animationContainer {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      flex-direction: column;
+    }
+    .anim-stage { width: 200px; height: 120px; position: relative; }
+    .envelope {
+      position: absolute;
+      left: 10px; top: 50px;
+      width: 32px; height: 22px;
+      background: var(--primary);
+      border-radius: 3px;
+      animation: slideIn 0.5s ease forwards, push 0.4s ease 0.6s forwards;
+    }
+    .envelope::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 0; height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-top: 12px solid var(--primary-dark);
+      transform: translateY(-12px);
+    }
+    @keyframes slideIn {
+      from { left: -40px; opacity: 0; }
+      to { left: 50px; opacity: 1; }
+    }
+    @keyframes push {
+      0% { left: 50px; }
+      50% { left: 60px; }
+      100% { left: 50px; }
+    }
+    .mailbox-anim {
+      position: absolute;
+      left: 100px; top: 30px;
+      width: 40px; height: 60px;
+      background: #D32F2F;
+      border-radius: 6px 6px 3px 3px;
+      animation: shake 0.15s ease 0.7s 3;
+    }
+    .mailbox-anim::after {
+      content: 'NGB';
+      position: absolute;
+      bottom: -18px;
+      width: 100%;
+      text-align: center;
+      font-size: 10px;
+      font-weight: bold;
+      color: #B71C1C;
+      font-family: var(--font);
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      50% { transform: translateX(3px); }
+    }
+    .busy-figure {
+      position: absolute;
+      right: 10px; top: 20px;
+      width: 16px; height: 24px;
+      opacity: 0.5;
+      animation: bob 0.8s ease-in-out infinite alternate;
+    }
+    .busy-figure .head {
+      width: 10px; height: 10px;
+      background: var(--text);
+      border-radius: 50%;
+      margin: 0 auto;
+    }
+    .busy-figure .body {
+      width: 16px; height: 14px;
+      background: var(--text);
+      border-radius: 3px;
+      margin-top: 2px;
+    }
+    @keyframes bob {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-3px); }
+    }
   </style>
 </head>
-<body class="theme-blue">
+<body class="theme-warm">
   <div class="header">
     <h3>📨 鳳凰編譯·快信</h3>
     <span class="subtitle">北京編譯中心</span>
+    <a href="https://mail.163.com/" target="_blank" style="font-size:12px; color:var(--primary); text-decoration:none; margin-left:8px;">📬 163郵箱</a>
+  </div>
+
+  <div id="setupWarning" class="setup-warning hidden">
+    ⚠️ 尚未設定 DeepSeek API Key，AI 功能無法使用。請前往 <a href="#" id="openOptionsLink">選項頁</a> 設定。
   </div>
 
   <div id="taskSelector" class="task-selector">
@@ -253,9 +378,9 @@
     </div>
 
     <div class="card">
-      <label>📝 內容描述（可使用 AI 建議）</label>
+      <label>📝 自由提示（可輸入任意要求給 AI，或使用下方按鈕自動生成）</label>
       <div class="row">
-        <input type="text" id="gfxDescription" placeholder="點擊 AI 建議或手動輸入" style="flex:1;">
+        <input type="text" id="gfxDescription" placeholder="例如：請強調加急，必須15:00前完成" style="flex:1;">
         <button id="gfxSuggestionBtn" class="btn-gold" style="flex:0 0 auto;">💡 AI建議</button>
         <button id="gfxAnalyzeBtn" class="btn-gold" style="flex:0 0 auto;">🖼️ AI讀圖</button>
       </div>
@@ -269,7 +394,6 @@
         <label><input type="radio" name="storageLocation" value="G盤"> G盤</label>
       </div>
 
-      <!-- 新增：節目使用時間 -->
       <label>⏰ 節目使用時間（可選）</label>
       <input type="text" id="airTime" placeholder="系統自動推薦下個整點，可手動修改">
 
@@ -302,16 +426,13 @@
     <div class="card">
       <label>任務類型</label>
       <input type="text" id="ngbTaskDisplay">
-
       <label>連結</label>
       <input type="text" id="ngbLink">
-
-      <label>📝 內容描述（可使用 AI 建議）</label>
+      <label>📝 自由提示（可輸入任意要求給 AI，或使用下方按鈕自動生成）</label>
       <div class="row">
         <input type="text" id="ngbDescription" placeholder="點擊 AI 建議或手動輸入" style="flex:1;">
         <button id="ngbSuggestionBtn" class="btn-gold" style="flex:0 0 auto;">💡 AI建議</button>
       </div>
-
       <label>💾 存放位置</label>
       <div class="radio-group">
         <label><input type="radio" name="ngbStorage" value="OTHER" checked> OTHER</label>
@@ -334,6 +455,15 @@
 
   <div id="status"></div>
   <input type="file" id="fileInput" multiple style="display:none" accept="image/*">
+
+  <div id="animationContainer">
+    <div class="anim-stage">
+      <div class="envelope"></div>
+      <div class="mailbox-anim"></div>
+      <div class="busy-figure"><div class="head"></div><div class="body"></div></div>
+      <div class="busy-figure" style="right:30px; top:15px;"><div class="head"></div><div class="body"></div></div>
+    </div>
+  </div>
 
   <script src="popup.js"></script>
 </body>

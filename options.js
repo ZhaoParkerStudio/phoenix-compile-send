@@ -4,12 +4,13 @@ const defaultGroups = [
   { name: 'NGB同事', emails: 'hkngb@phoenixtv.com, tpngb@hotmail.com' }
 ];
 
-// 加載設定並渲染
+// 載入設定並渲染
 chrome.storage.sync.get([
   'emailjsPublicKey', 'emailjsServiceID', 'emailjsTemplateID',
   'cloudName', 'cloudApiKey',
   'fromName', 'signature', 'deepseekKey', 'visionApiKey', 'recipientGroups', 'theme'
 ], (items) => {
+  // 預設部門公用配置（這些 Key 僅用於內部工具，正式發佈時建議移除）
   document.getElementById('emailjsPublicKey').value = items.emailjsPublicKey || 'kkvGYDki1X2Dgntrb';
   document.getElementById('emailjsServiceID').value = items.emailjsServiceID || 'service_0z1di8n';
   document.getElementById('emailjsTemplateID').value = items.emailjsTemplateID || 'template_yollu0g';
@@ -20,9 +21,9 @@ chrome.storage.sync.get([
   document.getElementById('deepseekKey').value = items.deepseekKey || '';
   document.getElementById('visionApiKey').value = items.visionApiKey || '';
 
-  const theme = items.theme || 'blue';
+  // 預設主題為暖白
+  const theme = items.theme || 'warm';
   document.getElementById('themeSelect').value = theme;
-  // 应用主题到当前页面
   document.body.className = 'theme-' + theme;
 
   let groups = items.recipientGroups;

@@ -4,12 +4,32 @@ let config = {};
 let gfxAttachments = [];
 let ngLink = '', ngType = '', ngSubType = '';
 
-// 計算下一個整點（自動推薦）
+// DeepSeek API 配置
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
+const DEEPSEEK_MODEL = 'deepseek-v4-flash';
+
+// 计算下一个整点
 function getNextHourFormatted() {
   const now = new Date();
   let nextHour = now.getHours() + 1;
   if (nextHour === 24) nextHour = 0;
   return String(nextHour).padStart(2, '0') + '00';
+}
+
+// 错误信息中文化映射
+function mapApiError(status, text) {
+  if (status === 401) return 'API Key 無效，請檢查選項頁中的 DeepSeek API Key';
+  if (status === 429) return 'AI 請求過於頻繁，請稍後再試';
+  if (status >= 500) return 'AI 服務暫時故障，請稍後重試';
+  return '網絡連線異常，請檢查網絡後重試';
+}
+
+// 防重复点击：禁用生成按钮
+function setGenerateButtons(disabled) {
+  const gfxBtn = document.getElementById('gfxGenerateBtn');
+  const ngbBtn = document.getElementById('ngbGenerateBtn');
+  if (gfxBtn) gfxBtn.disabled = disabled;
+  if (ngbBtn) ngbBtn.disabled = disabled;
 }
 
 // 初始化
@@ -21,11 +41,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   ]);
   config = items;
 
-  const theme = config.theme || 'blue';
+  const theme = config.theme || 'warm';
   document.body.className = `theme-${theme}`;
-
-  // 同步角标主题
   chrome.runtime.sendMessage({ action: 'updateBadgeTheme', theme: theme });
+
+  if (!config.deepseekKey) {
+    document.getElementById('setupWarning').classList.remove('hidden');
+    document.getElementById('openOptionsLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.runtime.openOptionsPage();
+    });
+  }
 
   if (!config.recipientGroups || config.recipientGroups.length === 0) {
     config.recipientGroups = [
@@ -41,6 +67,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   ngType = params.get('type');
   ngSubType = params.get('subType');
 
+  const autoTask = params.get('autoTask');
+  if (autoTask && ['newsBg', 'transparent', 'mapStatic', 'mapAnimated'].includes(autoTask)) {
+    currentTask = autoTask;
+  } else {
+    const stored = await chrome.storage.local.get('lastGfxTask');
+    currentTask = stored.lastGfxTask || 'newsBg';
+  }
+
   if (ngLink) {
     document.getElementById('taskSelector').classList.add('hidden');
     document.getElementById('gfxPanel').classList.add('hidden');
@@ -49,12 +83,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     initNgbPanel(params);
   } else {
     document.getElementById('ngbPanel').classList.add('hidden');
-    const stored = await chrome.storage.local.get('lastGfxTask');
-    currentTask = stored.lastGfxTask || 'newsBg';
     initGfxPanel();
   }
 
-  // 事件绑定
   document.getElementById('taskTypeSelect').addEventListener('change', onTaskSwitch);
   document.getElementById('addLocalBtn').addEventListener('click', () => document.getElementById('fileInput').click());
   document.getElementById('addUrlBtn').addEventListener('click', toggleUrlInput);
@@ -65,9 +96,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('gfxClearBtn').addEventListener('click', clearQueue);
   document.getElementById('ngbGenerateBtn').addEventListener('click', ngbGenerate);
   document.getElementById('ngbSendBtn').addEventListener('click', ngbSend);
-  document.getElementById('gfxSuggestionBtn')?.addEventListener('click', gfxSuggestion);
-  document.getElementById('ngbSuggestionBtn')?.addEventListener('click', ngbSuggestion);
-  document.getElementById('gfxAnalyzeBtn')?.addEventListener('click', analyzeImages);
+
+  const gfxSuggestionBtn = document.getElementById('gfxSuggestionBtn');
+  if (gfxSuggestionBtn) {
+    gfxSuggestionBtn.addEventListener('click', gfxSuggestion);
+    console.log('✅ gfxSuggestionBtn 事件已绑定');
+  } else {
+    console.error('❌ 找不到 gfxSuggestionBtn 按钮');
+  }
+
+  const ngbSuggestionBtn = document.getElementById('ngbSuggestionBtn');
+  if (ngbSuggestionBtn) {
+    ngbSuggestionBtn.addEventListener('click', ngbSuggestion);
+    console.log('✅ ngbSuggestionBtn 事件已绑定');
+  } else {
+    console.error('❌ 找不到 ngbSuggestionBtn 按钮');
+  }
+
+  const gfxAnalyzeBtn = document.getElementById('gfxAnalyzeBtn');
+  if (gfxAnalyzeBtn) {
+    gfxAnalyzeBtn.addEventListener('click', analyzeImages);
+    console.log('✅ gfxAnalyzeBtn 事件已绑定');
+  }
 });
 
 // ---------- GFX 面板 ----------
@@ -81,14 +131,13 @@ async function initGfxPanel() {
   populateRecipients('recipientGroup', 'customRecipientGfx');
   await loadQueue(currentTask);
 
-  // 自動填入下一個整點（若為空）
   const airTimeInput = document.getElementById('airTime');
   if (!airTimeInput.value) {
     airTimeInput.value = getNextHourFormatted();
   }
 
   const pageTitle = await getCurrentPageTitle();
-  if (pageTitle) {
+  if (pageTitle && !document.getElementById('gfxDescription').value) {
     document.getElementById('gfxDescription').value = pageTitle;
   }
 }
@@ -182,10 +231,17 @@ async function uploadToCloudinary(base64Data, fileName) {
   else throw new Error(data.error?.message || 'Cloudinary 上傳失敗');
 }
 
-// AI 建议描述
+// ========== AI 建议函数 ==========
 async function gfxSuggestion() {
   const status = document.getElementById('status');
   status.textContent = 'AI 生成建議中…';
+  console.log('=== gfxSuggestion 被調用 ===');
+
+  if (!config.deepseekKey) {
+    status.textContent = '❌ 請先在選項頁設定 DeepSeek API Key';
+    return;
+  }
+
   try {
     const taskNameMap = { newsBg: '新聞底', transparent: '透明底', mapStatic: '靜地圖', mapAnimated: '動地圖' };
     const taskName = taskNameMap[currentTask] || '新聞底';
@@ -200,18 +256,32 @@ async function gfxSuggestion() {
 要求：描述必須具體反映內容，SLUG 應提煉關鍵事件或主體。
 輸出嚴格JSON：{"description":"描述","slug":"SLUG"}`;
     
-    const info = await callDeepSeekJSON(infoPrompt);
+    const info = await callAIJSON(infoPrompt);
+    console.log('返回的 info:', info);
+    
+    if (!info.description || !info.slug) {
+      throw new Error('AI 未能生成有效描述，請稍後重試');
+    }
+    
     document.getElementById('gfxDescription').value = info.description;
     document.getElementById('slug').value = info.slug;
     status.textContent = '✅ 建議已填入，可按需修改';
   } catch (e) {
     status.textContent = '❌ ' + e.message;
+    console.error('AI建議錯誤：', e);
   }
 }
 
 async function ngbSuggestion() {
   const status = document.getElementById('status');
   status.textContent = 'AI 生成建議中…';
+  console.log('=== ngbSuggestion 被調用 ===');
+
+  if (!config.deepseekKey) {
+    status.textContent = '❌ 請先在選項頁設定 DeepSeek API Key';
+    return;
+  }
+
   try {
     const taskDisplay = document.getElementById('ngbTaskDisplay').value;
     const oldDesc = document.getElementById('ngbDescription').value.trim();
@@ -222,15 +292,17 @@ async function ngbSuggestion() {
 網頁標題：${oldDesc || '無'}
 連結：${link}
 只返回描述文字。`;
-    const desc = await callDeepSeekSimple(descPrompt);
+    const desc = await callAISimple(descPrompt);
+    if (!desc) throw new Error('AI 未能生成描述，請稍後重試');
     document.getElementById('ngbDescription').value = desc;
     status.textContent = '✅ 建議已填入，可按需修改';
   } catch (e) {
     status.textContent = '❌ ' + e.message;
+    console.error('AI建議錯誤：', e);
   }
 }
 
-// ========== AI 读图（调用智谱 GLM-4V-Flash） ==========
+// AI 读图（智谱）
 async function analyzeImages() {
   const status = document.getElementById('status');
   status.textContent = 'AI 讀圖中…';
@@ -240,13 +312,7 @@ async function analyzeImages() {
 
     if (gfxAttachments.length === 0) throw new Error('請先添加至少一張圖片');
 
-    const messages = [
-      {
-        role: 'user',
-        content: []
-      }
-    ];
-
+    const messages = [{ role: 'user', content: [] }];
     for (const att of gfxAttachments) {
       let base64Data = att.base64;
       let mimeType = att.mimeType || 'image/png';
@@ -257,44 +323,28 @@ async function analyzeImages() {
       }
       messages[0].content.push({
         type: 'image_url',
-        image_url: {
-          url: `data:${mimeType};base64,${base64Data}`
-        }
+        image_url: { url: `data:${mimeType};base64,${base64Data}` }
       });
     }
-
-    messages[0].content.push({
-      type: 'text',
-      text: '請用12字以內的香港繁體中文描述這些圖片的共同主題。只返回描述，不要其他文字。'
-    });
+    messages[0].content.push({ type: 'text', text: '請用12字以內的香港繁體中文描述這些圖片的共同主題。只返回描述，不要其他文字。' });
 
     const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'glm-4v-flash',
-        messages: messages,
-        max_tokens: 50,
-        temperature: 0.3
-      })
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'glm-4v-flash', messages, max_tokens: 50, temperature: 0.3 })
     });
-
     const data = await response.json();
     if (data.error) throw new Error(data.error.message || '視覺模型調用失敗');
-    
-    const desc = data.choices[0].message.content.trim();
-    document.getElementById('gfxDescription').value = desc;
+    document.getElementById('gfxDescription').value = data.choices[0].message.content.trim();
     status.textContent = '✅ 圖片分析完成，描述已填入';
   } catch (e) {
     status.textContent = '❌ ' + e.message;
   }
 }
 
-// 生成邮件（AI 辅助，不强制）
+// 生成邮件（AI 辅助）
 async function gfxGenerate() {
+  setGenerateButtons(true);
   const status = document.getElementById('status');
   status.textContent = 'AI 生成中…';
   try {
@@ -304,15 +354,15 @@ async function gfxGenerate() {
     const extra = document.getElementById('extra').value.trim();
     const taskNameMap = { newsBg: '新聞底', transparent: '透明底', mapStatic: '靜地圖', mapAnimated: '動地圖' };
     const taskName = taskNameMap[currentTask] || '新聞底';
-
     const prompt = buildGfxPrompt(desc || '（無）', slug || '（無）', storage, taskName, extra);
-    const { subject, body } = await callDeepSeek(prompt);
-
+    const { subject, body } = await callAI(prompt);
     document.getElementById('gfxSubject').value = subject;
     document.getElementById('gfxBody').value = body;
     status.textContent = '✅ 生成完成，可編輯後發送';
   } catch (e) {
     status.textContent = '❌ ' + e.message;
+  } finally {
+    setGenerateButtons(false);
   }
 }
 
@@ -323,7 +373,7 @@ function buildGfxPrompt(desc, slug, storage, taskName, extra) {
   return `你是一位專業編輯助理。請根據以下資訊撰寫一封香港繁體中文的工作郵件：
 - 收件人：圖形同事
 - 要求：把附件圖片製作成【${taskName}】，存放在【${storage}】
-- 圖片內容描述：${desc}
+- 自由提示：${desc}
 - SLUG：${slug}
 ${extraSection}
 ${timeLine ? '- 使用時間：' + timeLine : ''}
@@ -343,7 +393,7 @@ Parker
 資訊台北京編譯中心
 7-7164
 ---
-輸出嚴格JSON：{"subject":"主題","body":"正文"}。主題格式建議為“${desc} ${taskName}”。`;
+輸出嚴格JSON：{"subject":"主題","body":"正文"}。`;
 }
 
 // ---------- NGB 面板 ----------
@@ -360,12 +410,11 @@ async function initNgbPanel(params) {
     }
   }
   const pageTitle = params.get('pageTitle') || await getCurrentPageTitle();
-  if (pageTitle) {
-    document.getElementById('ngbDescription').value = pageTitle;
-  }
+  if (pageTitle) document.getElementById('ngbDescription').value = pageTitle;
 }
 
 async function ngbGenerate() {
+  setGenerateButtons(true);
   const status = document.getElementById('status');
   status.textContent = 'AI 生成中…';
   try {
@@ -373,21 +422,20 @@ async function ngbGenerate() {
     const link = document.getElementById('ngbLink').value.trim();
     const storage = document.querySelector('input[name="ngbStorage"]:checked').value;
     const taskDisplay = document.getElementById('ngbTaskDisplay').value;
-
     let prompt;
     if (ngSubType === 'record') {
-      prompt = `你是一位專業編輯助理。請撰寫一封香港繁體中文郵件，要求錄屏網站【${link}】到【${storage}】。描述：${desc || '（無）'}。簽名：${config.fromName}\n${config.signature}。語氣禮貌、專業，不必拘泥格式。輸出JSON：{"subject":"主題","body":"正文"}。主題建議“${desc || ''} 請幫錄屏”。`;
+      prompt = `你是一位專業編輯助理。請撰寫一封香港繁體中文郵件，要求錄屏網站【${link}】到【${storage}】。自由提示：${desc || '（無）'}。簽名：${config.fromName}\n${config.signature}。語氣禮貌、專業，不必拘泥格式。輸出JSON：{"subject":"主題","body":"正文"}。主題建議“${desc || ''} 請幫錄屏”。`;
     } else {
-      prompt = `你是一位專業編輯助理。請撰寫一封香港繁體中文郵件，要求下載視頻【${link}】到【${storage}】。描述：${desc || '（無）'}。簽名：${config.fromName}\n${config.signature}。語氣禮貌、專業，不必拘泥格式。輸出JSON：{"subject":"主題","body":"正文"}。主題建議“${desc || ''} 請下載”。`;
+      prompt = `你是一位專業編輯助理。請撰寫一封香港繁體中文郵件，要求下載視頻【${link}】到【${storage}】。自由提示：${desc || '（無）'}。簽名：${config.fromName}\n${config.signature}。語氣禮貌、專業，不必拘泥格式。輸出JSON：{"subject":"主題","body":"正文"}。主題建議“${desc || ''} 請下載”。`;
     }
-
-    const { subject, body } = await callDeepSeek(prompt);
-
+    const { subject, body } = await callAI(prompt);
     document.getElementById('ngbSubject').value = subject;
     document.getElementById('ngbBody').value = body;
     status.textContent = '✅ 生成完成，可編輯後發送';
   } catch (e) {
     status.textContent = '❌ ' + e.message;
+  } finally {
+    setGenerateButtons(false);
   }
 }
 
@@ -414,20 +462,16 @@ async function gfxSend() {
       imageLinks.push(url);
     }
 
-    if (imageLinks.length > 0) {
-      let linksText = '\n\n圖片下載連結：\n';
-      imageLinks.forEach((url, idx) => { linksText += `${idx + 1}. ${url}\n`; });
-      body += linksText;
-    }
+    let linksText = '\n\n圖片下載連結：\n';
+    imageLinks.forEach((url, idx) => { linksText += `${idx + 1}. ${url}\n`; });
+    body += linksText;
 
     status.textContent = '正在發送…';
     await sendEmail(subject || '（無主題）', body, toEmails);
     await chrome.runtime.sendMessage({ action: 'clearQueue', taskType: currentTask });
-    status.textContent = '✅ 郵件已發送！窗口即將關閉';
-    setTimeout(() => window.close(), 2000);
+    showSendAnimation();
   } catch (e) {
     status.textContent = '❌ ' + e.message;
-    setTimeout(() => window.close(), 3000);
   }
 }
 
@@ -439,15 +483,21 @@ async function ngbSend() {
     const subject = document.getElementById('ngbSubject').value.trim();
     const body = document.getElementById('ngbBody').value.trim();
     if (!subject && !body) throw new Error('請輸入主題或正文');
-
     status.textContent = '發送中…';
     await sendEmail(subject || '（無主題）', body, toEmails);
-    status.textContent = '✅ 郵件已發送！窗口即將關閉';
-    setTimeout(() => window.close(), 2000);
+    showSendAnimation();
   } catch (e) {
     status.textContent = '❌ ' + e.message;
-    setTimeout(() => window.close(), 3000);
   }
+}
+
+function showSendAnimation() {
+  document.getElementById('gfxPanel').classList.add('hidden');
+  document.getElementById('ngbPanel').classList.add('hidden');
+  document.getElementById('taskSelector').classList.add('hidden');
+  document.getElementById('status').classList.add('hidden');
+  document.getElementById('animationContainer').style.display = 'flex';
+  setTimeout(() => window.close(), 2200);
 }
 
 // EmailJS 发送
@@ -458,18 +508,9 @@ async function sendEmail(subject, body, toEmails) {
     service_id: emailjsServiceID,
     template_id: emailjsTemplateID,
     user_id: emailjsPublicKey,
-    template_params: {
-      to_email: toEmails,
-      subject: subject,
-      message: body,
-      from_name: config.fromName || 'Parker'
-    }
+    template_params: { to_email: toEmails, subject, message: body, from_name: config.fromName || 'Parker' }
   };
-  const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
+  const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   if (!response.ok) throw new Error(`發送失敗: ${await response.text()}`);
 }
 
@@ -500,9 +541,7 @@ function populateRecipients(selectId, customInputId) {
     ];
     chrome.storage.sync.set({ recipientGroups: config.recipientGroups });
   }
-  config.recipientGroups.forEach((g, idx) => {
-    select.appendChild(new Option(`${g.name} (${g.emails})`, idx));
-  });
+  config.recipientGroups.forEach((g, idx) => select.appendChild(new Option(`${g.name} (${g.emails})`, idx)));
   select.appendChild(new Option('✏️ 自訂...', 'custom'));
   select.addEventListener('change', () => {
     customInput.style.display = select.value === 'custom' ? 'block' : 'none';
@@ -513,13 +552,10 @@ function populateRecipients(selectId, customInputId) {
 function getRecipientEmails(selectId, customInputId) {
   const select = document.getElementById(selectId);
   const customInput = document.getElementById(customInputId);
-  if (select.value === 'custom') {
-    return customInput.value.trim();
-  } else {
-    const groupIdx = parseInt(select.value);
-    const group = config.recipientGroups[groupIdx];
-    return group ? group.emails : '';
-  }
+  if (select.value === 'custom') return customInput.value.trim();
+  const groupIdx = parseInt(select.value);
+  const group = config.recipientGroups[groupIdx];
+  return group ? group.emails : '';
 }
 
 function onTaskSwitch() {
@@ -545,66 +581,74 @@ async function clearQueue() {
   document.getElementById('status').textContent = '隊列已清空';
 }
 
-// DeepSeek 调用系列
-async function callDeepSeek(prompt) {
-  const response = await fetch('https://api.deepseek.com/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.deepseekKey}`
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      max_tokens: 800,
-      response_format: { type: 'json_object' }
-    })
-  });
-  if (!response.ok) throw new Error(`DeepSeek 錯誤: ${await response.text()}`);
+// DeepSeek API 调用
+async function callAI(prompt) {
+  const apiKey = config.deepseekKey;
+  if (!apiKey) throw new Error('請先在選項頁設定 DeepSeek API Key');
+  let response;
+  try {
+    response = await fetch(DEEPSEEK_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: DEEPSEEK_MODEL, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 800 })
+    });
+  } catch (e) { throw new Error('網絡連線異常，請檢查網絡後重試'); }
+  if (!response.ok) { const errText = await response.text(); throw new Error(mapApiError(response.status, errText)); }
   const data = await response.json();
-  const content = JSON.parse(data.choices[0].message.content);
-  return { subject: content.subject, body: content.body };
+  const content = data.choices[0].message.content.trim();
+  try {
+    const json = JSON.parse(content);
+    return { subject: json.subject || '（無主題）', body: json.body || content };
+  } catch (e) {
+    const match = content.match(/\{[\s\S]*\}/);
+    if (match) {
+      try { const json = JSON.parse(match[0]); return { subject: json.subject || '（無主題）', body: json.body || content }; } catch (e2) {}
+    }
+    const lines = content.split('\n');
+    return { subject: lines[0].replace(/^主題[：:]?\s*/, '').trim() || '（無主題）', body: lines.slice(1).join('\n').trim() || content };
+  }
 }
 
-async function callDeepSeekSimple(prompt) {
-  const response = await fetch('https://api.deepseek.com/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.deepseekKey}`
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      max_tokens: 50,
-      stop: ['\n']
-    })
-  });
-  if (!response.ok) throw new Error(`DeepSeek 錯誤: ${await response.text()}`);
+async function callAISimple(prompt) {
+  const apiKey = config.deepseekKey;
+  if (!apiKey) throw new Error('請先在選項頁設定 DeepSeek API Key');
+  let response;
+  try {
+    response = await fetch(DEEPSEEK_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: DEEPSEEK_MODEL, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 50, stop: ['\n'] })
+    });
+  } catch (e) { throw new Error('網絡連線異常，請檢查網絡後重試'); }
+  if (!response.ok) { const errText = await response.text(); throw new Error(mapApiError(response.status, errText)); }
   const data = await response.json();
   return data.choices[0].message.content.trim();
 }
 
-async function callDeepSeekJSON(prompt) {
-  const response = await fetch('https://api.deepseek.com/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.deepseekKey}`
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      max_tokens: 200,
-      response_format: { type: 'json_object' }
-    })
-  });
-  if (!response.ok) throw new Error(`DeepSeek 錯誤: ${await response.text()}`);
+async function callAIJSON(prompt) {
+  const apiKey = config.deepseekKey;
+  if (!apiKey) throw new Error('請先在選項頁設定 DeepSeek API Key');
+  let response;
+  try {
+    response = await fetch(DEEPSEEK_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: DEEPSEEK_MODEL, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 200 })
+    });
+  } catch (e) { throw new Error('網絡連線異常，請檢查網絡後重試'); }
+  if (!response.ok) { const errText = await response.text(); throw new Error(mapApiError(response.status, errText)); }
   const data = await response.json();
-  return JSON.parse(data.choices[0].message.content);
+  const content = data.choices[0].message.content.trim();
+  console.log('DeepSeek 原始返回:', content);
+  try {
+    return JSON.parse(content);
+  } catch (e) {
+    const match = content.match(/\{[\s\S]*\}/);
+    if (match) {
+      try { return JSON.parse(match[0]); } catch (e2) {}
+    }
+    throw new Error('AI 返回內容無法解析為 JSON，請重試');
+  }
 }
 
 function updateBadge() {}

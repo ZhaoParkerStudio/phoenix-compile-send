@@ -4,40 +4,56 @@
   <meta charset="UTF-8">
   <style>
     :root {
-      --primary: #1E88E5;
-      --primary-dark: #1565C0;
-      --bg: #F5F7FA;
+      --primary: #1A1A18;
+      --primary-dark: #0F0F0E;
+      --bg: #FAF9F5;
       --card: #FFFFFF;
-      --border: #E0E4E8;
-      --text: #333333;
-      --text-secondary: #666666;
-      --radius: 8px;
+      --border: rgba(0,0,0,0.08);
+      --text: #1A1A18;
+      --text-secondary: #5C5C57;
+      --radius: 10px;
+      --shadow: 0 1px 2px rgba(0,0,0,0.04);
       --font: "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif;
     }
 
-    body.theme-blue {}
+    /* 主题类：暖白（默认） */
+    body.theme-warm {}
+
+    /* 蓝色主题 */
+    body.theme-blue {
+      --primary: #1E88E5;
+      --primary-dark: #1565C0;
+    }
+
+    /* 红色主题 */
     body.theme-red {
       --primary: #D40000;
       --primary-dark: #B71C1C;
     }
+
+    /* 绿色主题 */
     body.theme-green {
       --primary: #2E7D32;
       --primary-dark: #1B5E20;
     }
+
+    /* 暗夜黑主题 */
     body.theme-dark {
-      --primary: #424242;
-      --primary-dark: #212121;
-      --bg: #303030;
-      --card: #424242;
-      --border: #616161;
-      --text: #FFFFFF;
-      --text-secondary: #BDBDBD;
+      --primary: #C2C0B6;
+      --primary-dark: #FAF9F5;
+      --bg: #30302E;
+      --card: #262624;
+      --border: rgba(255,255,255,0.08);
+      --text: #FAF9F5;
+      --text-secondary: #9C9A92;
+      --shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: var(--font);
-      font-size: 14px;
+      font-size: 15px;
+      line-height: 1.6;
       max-width: 650px;
       margin: 30px auto;
       padding: 20px;
@@ -45,17 +61,24 @@
       color: var(--text);
       transition: background 0.3s, color 0.3s;
     }
-    h2 { color: var(--primary); }
-    h3 { margin-top: 24px; border-bottom: 2px solid var(--primary); padding-bottom: 4px; }
-    label { display: block; margin-top: 15px; font-weight: bold; }
+    h2 { font-size: 20px; font-weight: 600; color: var(--primary); margin-bottom: 16px; }
+    h3 {
+      font-size: 16px;
+      margin-top: 24px;
+      border-bottom: 0.5px solid var(--border);
+      padding-bottom: 4px;
+      font-weight: 600;
+    }
+    label { display: block; margin-top: 15px; font-weight: 600; font-size: 14px; }
     input, textarea, select {
       width: 100%;
-      padding: 8px;
+      padding: 10px 12px;
       box-sizing: border-box;
       margin-top: 4px;
-      border: 1px solid var(--border);
+      border: 0.5px solid var(--border);
       border-radius: var(--radius);
       font-family: inherit;
+      font-size: 15px;
       background: var(--card);
       color: var(--text);
     }
@@ -65,33 +88,26 @@
       background: var(--card);
       padding: 10px;
       margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      border: 0.5px solid var(--border);
     }
     button {
-      padding: 8px 15px;
+      padding: 10px 15px;
       margin: 10px 5px 0 0;
       cursor: pointer;
       border: none;
       border-radius: var(--radius);
       font-family: inherit;
-      background: var(--primary);
-      color: #fff;
+      font-weight: 600;
+      font-size: 15px;
     }
-    .btn-save { font-size: 16px; }
-    .btn-link {
-      background: none;
-      color: var(--primary);
-      text-decoration: underline;
-      font-size: 14px;
-      padding: 0;
-      margin: 0;
-    }
-    .hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .btn-save { background: var(--primary); color: #fff; font-size: 16px; }
+    .btn-link { background: none; color: var(--primary); text-decoration: underline; font-size: 14px; padding: 0; margin: 0; }
+    .hint { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
     .hidden { display: none; }
   </style>
 </head>
-<body class="theme-blue">
+<body class="theme-warm">
   <h2>⚙️ 鳳凰編譯·快信 設定</h2>
 
   <h3>✉️ 寄件人資訊</h3>
@@ -103,6 +119,7 @@
   <h3>🤖 AI 生成設定</h3>
   <label>DeepSeek API Key</label>
   <input type="password" id="deepseekKey" placeholder="請輸入 DeepSeek API 金鑰">
+  <div class="hint">請向部門管理員獲取 DeepSeek 公用 Key，或自行至 <a href="https://platform.deepseek.com/" target="_blank">DeepSeek 官網</a> 申請。</div>
 
   <h3>🖼️ 圖片理解 API（用於 AI 讀圖）</h3>
   <label>視覺模型 API Key（目前支援智譜 GLM-4V-Flash）</label>
@@ -112,6 +129,7 @@
   <h3>🎨 主題設定</h3>
   <label>選擇主題</label>
   <select id="themeSelect">
+    <option value="warm">暖白（Claude 風格）</option>
     <option value="blue">海洋藍</option>
     <option value="red">鳳凰紅</option>
     <option value="green">森林綠</option>
@@ -122,7 +140,6 @@
   <div id="groupsContainer"></div>
   <button id="addGroupBtn">➕ 新增收件人組</button>
 
-  <!-- 高级设置折叠区 -->
   <div style="margin-top: 30px;">
     <button id="toggleAdvancedBtn" class="btn-link">⚙️ 高級設定（通常無需修改）</button>
   </div>
