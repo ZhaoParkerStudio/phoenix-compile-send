@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --primary: #1A1A18;
+      --primary-dark: #0F0F0E;
+      --bg: #FAF9F5;
+      --card: #FFFFFF;
+      --border: rgba(0,0,0,0.08);
+      --text: #1A1A18;
+      --text-secondary: #5C5C57;
+      --radius: 10px;
+      --shadow: 0 1px 2px rgba(0,0,0,0.04);
+      --font: "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif;
+    }
+
+    /* 主题类：暖白（默认） */
+    body.theme-warm {}
+
+    /* 蓝色主题 */
+    body.theme-blue {
+      --primary: #1E88E5;
+      --primary-dark: #1565C0;
+    }
+
+    /* 红色主题 */
+    body.theme-red {
+      --primary: #D40000;
+      --primary-dark: #B71C1C;
+    }
+
+    /* 绿色主题 */
+    body.theme-green {
+      --primary: #2E7D32;
+      --primary-dark: #1B5E20;
+    }
+
+    /* 暗夜黑主题 */
+    body.theme-dark {
+      --primary: #C2C0B6;
+      --primary-dark: #FAF9F5;
+      --bg: #30302E;
+      --card: #262624;
+      --border: rgba(255,255,255,0.08);
+      --text: #FAF9F5;
+      --text-secondary: #9C9A92;
+      --shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 650px;
+      margin: 30px auto;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    h2 { font-size: 20px; font-weight: 600; color: var(--primary); margin-bottom: 16px; }
+    h3 {
+      font-size: 16px;
+      margin-top: 24px;
+      border-bottom: 0.5px solid var(--border);
+      padding-bottom: 4px;
+      font-weight: 600;
+    }
+    label { display: block; margin-top: 15px; font-weight: 600; font-size: 14px; }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      box-sizing: border-box;
+      margin-top: 4px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 15px;
+      background: var(--card);
+      color: var(--text);
+    }
+    .inline { display: flex; gap: 10px; align-items: center; }
+    .inline input { flex: 1; }
+    .group-item {
+      background: var(--card);
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: var(--radius);
+      border: 0.5px solid var(--border);
+    }
+    button {
+      padding: 10px 15px;
+      margin: 10px 5px 0 0;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .btn-save { background: var(--primary); color: #fff; font-size: 16px; }
+    .btn-link { background: none; color: var(--primary); text-decoration: underline; font-size: 14px; padding: 0; margin: 0; }
+    .hint { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body class="theme-warm">
+  <h2>⚙️ 鳳凰編譯·快信 設定</h2>
+
+  <h3>✉️ 寄件人資訊</h3>
+  <label>寄件人名稱</label>
+  <input type="text" id="fromName" placeholder="Parker">
+  <label>寄件人簽名（部門／分機號，將顯示在郵件末尾）</label>
+  <input type="text" id="signature" placeholder="資訊台北京編譯中心 / 7-7164">
+
+  <h3>🤖 AI 生成設定</h3>
+  <label>DeepSeek API Key</label>
+  <input type="password" id="deepseekKey" placeholder="請輸入 DeepSeek API 金鑰">
+  <div class="hint">請向部門管理員獲取 DeepSeek 公用 Key，或自行至 <a href="https://platform.deepseek.com/" target="_blank">DeepSeek 官網</a> 申請。</div>
+
+  <h3>🖼️ 圖片理解 API（用於 AI 讀圖）</h3>
+  <label>視覺模型 API Key（目前支援智譜 GLM-4V-Flash）</label>
+  <input type="password" id="visionApiKey" placeholder="可選填，獲取免費 Key 後填入">
+  <div class="hint">請至 <a href="https://open.bigmodel.cn/" target="_blank">智譜AI開放平台</a> 註冊並獲取 API Key。<br>留空則禁用「AI 讀圖」功能。</div>
+
+  <h3>🎨 主題設定</h3>
+  <label>選擇主題</label>
+  <select id="themeSelect">
+    <option value="warm">暖白（Claude 風格）</option>
+    <option value="blue">海洋藍</option>
+    <option value="red">鳳凰紅</option>
+    <option value="green">森林綠</option>
+    <option value="dark">暗夜黑</option>
+  </select>
+
+  <h3>👥 收件人組管理</h3>
+  <div id="groupsContainer"></div>
+  <button id="addGroupBtn">➕ 新增收件人組</button>
+
+  <div style="margin-top: 30px;">
+    <button id="toggleAdvancedBtn" class="btn-link">⚙️ 高級設定（通常無需修改）</button>
+  </div>
+
+  <div id="advancedSettings" class="hidden">
+    <h3>📡 EmailJS 發送設定</h3>
+    <p>使用 EmailJS 作為郵件發送中繼。</p>
+    <label>EmailJS Public Key</label>
+    <input type="text" id="emailjsPublicKey" placeholder="user_xxxxx...">
+    <label>EmailJS Service ID</label>
+    <input type="text" id="emailjsServiceID" placeholder="service_xxxxx">
+    <label>EmailJS Template ID</label>
+    <input type="text" id="emailjsTemplateID" placeholder="template_xxxxx">
+
+    <h3>🖼️ Cloudinary 圖床設定（圖片將轉為連結發送）</h3>
+    <label>Cloudinary Cloud Name</label>
+    <input type="text" id="cloudName" placeholder="dcg3rnrmq">
+    <label>Cloudinary API Key</label>
+    <input type="text" id="cloudApiKey" placeholder="521787134687759">
+    <div class="hint">註冊 Cloudinary 後在 Dashboard 可獲取以上兩項。<br>注意：無需填寫 API Secret。</div>
+  </div>
+
+  <br>
+  <button id="saveBtn" class="btn-save">💾 儲存所有設定</button>
+  <span id="statusMsg" style="color:green; margin-left:10px;"></span>
+
+  <script src="options.js"></script>
+</body>
+</html>

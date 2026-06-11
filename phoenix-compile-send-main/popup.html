@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --primary: #1A1A18;
+      --primary-light: #2D2D28;
+      --primary-dark: #0F0F0E;
+      --gold: #C17D4B;
+      --bg: #FAF9F5;
+      --card: #FFFFFF;
+      --border: rgba(0,0,0,0.08);
+      --text: #1A1A18;
+      --text-secondary: #5C5C57;
+      --btn-primary-text: #FFFFFF;
+      --btn-disabled-bg: #E5E3DC;
+      --warning-bg: #FDF5F5;
+      --warning-text: #A73D39;
+      --gold-bg: #FEF9F0;
+      --gold-text: #8B4C2E;
+      --radius: 10px;
+      --shadow: 0 1px 2px rgba(0,0,0,0.04);
+      --font: "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif;
+    }
+
+    body.theme-warm {}
+    body.theme-blue {
+      --primary: #1E88E5;
+      --primary-light: #42A5F5;
+      --primary-dark: #1565C0;
+      --gold: #FFB81C;
+    }
+    body.theme-red {
+      --primary: #D40000;
+      --primary-light: #FF5252;
+      --primary-dark: #B71C1C;
+      --gold: #FFB81C;
+    }
+    body.theme-green {
+      --primary: #2E7D32;
+      --primary-light: #4CAF50;
+      --primary-dark: #1B5E20;
+      --gold: #FFB81C;
+    }
+    body.theme-dark {
+      --primary: #C2C0B6;
+      --primary-light: #9C9A92;
+      --primary-dark: #FAF9F5;
+      --bg: #30302E;
+      --card: #262624;
+      --border: rgba(255,255,255,0.08);
+      --text: #FAF9F5;
+      --text-secondary: #9C9A92;
+      --btn-primary-text: #141413;
+      --btn-disabled-bg: #3D3D3A;
+      --warning-bg: #602A28;
+      --warning-text: #EE8884;
+      --gold-bg: #483A0F;
+      --gold-text: #D1A041;
+      --shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      padding: 16px;
+      width: 520px;
+      min-height: 550px;
+      transition: background 0.3s, color 0.3s;
+      animation: fadeScaleIn 0.2s ease-out;
+    }
+
+    @keyframes fadeScaleIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .header h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary);
+      margin: 0;
+    }
+    .header .subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-left: auto;
+    }
+
+    .setup-warning {
+      background: #FDF5F5;
+      border: 0.5px solid rgba(167,61,57,0.3);
+      padding: 10px;
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      color: #A73D39;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .task-selector { margin-bottom: 15px; }
+    .task-selector select, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      font-family: var(--font);
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      border: 0.5px solid var(--border);
+    }
+    .card-label {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      margin-top: 14px;
+      margin-bottom: 4px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 15px;
+      background: var(--bg);
+      color: var(--text);
+      transition: border 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--card);
+    }
+
+    .row { display: flex; gap: 10px; align-items: center; }
+    .row > * { flex: 1; }
+
+    .attachments { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+    .thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 0.5px solid var(--border);
+      position: relative;
+    }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb .del {
+      position: absolute;
+      top: -4px; right: -4px;
+      background: rgba(167,61,57,0.8);
+      color: #fff;
+      border-radius: 50%;
+      width: 18px; height: 18px;
+      text-align: center;
+      font-size: 12px;
+      cursor: pointer;
+      line-height: 18px;
+      transition: background 0.2s;
+    }
+    .thumb .del:hover { background: var(--warning-text); }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 600;
+      transition: opacity 0.2s, transform 0.1s, background 0.2s;
+    }
+    button:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--primary);
+      color: var(--btn-primary-text);
+    }
+    .btn-primary:disabled {
+      background: var(--btn-disabled-bg);
+      color: var(--text-secondary);
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #F0EEE7;
+      color: var(--text);
+      border: 0.5px solid var(--border);
+    }
+    .btn-warning {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+    .btn-gold {
+      border: 0.5px solid var(--gold);
+      background: var(--gold-bg);
+      color: var(--gold-text);
+    }
+
+    .hidden { display: none; }
+
+    #status {
+      margin-top: 12px;
+      font-size: 14px;
+      padding: 10px;
+      border-radius: var(--radius);
+      background: var(--card);
+      color: var(--text-secondary);
+      border: 0.5px solid var(--border);
+    }
+
+    .radio-group { display: flex; gap: 20px; margin: 8px 0; }
+    .radio-group label {
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    /* 动画容器 */
+    #animationContainer {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      flex-direction: column;
+    }
+    .anim-stage { width: 200px; height: 120px; position: relative; }
+    .envelope {
+      position: absolute;
+      left: 10px; top: 50px;
+      width: 32px; height: 22px;
+      background: var(--primary);
+      border-radius: 3px;
+      animation: slideIn 0.5s ease forwards, push 0.4s ease 0.6s forwards;
+    }
+    .envelope::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 0; height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-top: 12px solid var(--primary-dark);
+      transform: translateY(-12px);
+    }
+    @keyframes slideIn {
+      from { left: -40px; opacity: 0; }
+      to { left: 50px; opacity: 1; }
+    }
+    @keyframes push {
+      0% { left: 50px; }
+      50% { left: 60px; }
+      100% { left: 50px; }
+    }
+    .mailbox-anim {
+      position: absolute;
+      left: 100px; top: 30px;
+      width: 40px; height: 60px;
+      background: #D32F2F;
+      border-radius: 6px 6px 3px 3px;
+      animation: shake 0.15s ease 0.7s 3;
+    }
+    .mailbox-anim::after {
+      content: 'NGB';
+      position: absolute;
+      bottom: -18px;
+      width: 100%;
+      text-align: center;
+      font-size: 10px;
+      font-weight: bold;
+      color: #B71C1C;
+      font-family: var(--font);
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      50% { transform: translateX(3px); }
+    }
+    .busy-figure {
+      position: absolute;
+      right: 10px; top: 20px;
+      width: 16px; height: 24px;
+      opacity: 0.5;
+      animation: bob 0.8s ease-in-out infinite alternate;
+    }
+    .busy-figure .head {
+      width: 10px; height: 10px;
+      background: var(--text);
+      border-radius: 50%;
+      margin: 0 auto;
+    }
+    .busy-figure .body {
+      width: 16px; height: 14px;
+      background: var(--text);
+      border-radius: 3px;
+      margin-top: 2px;
+    }
+    @keyframes bob {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-3px); }
+    }
+  </style>
+</head>
+<body class="theme-warm">
+  <div class="header">
+    <h3>📨 鳳凰編譯·快信</h3>
+    <span class="subtitle">北京編譯中心</span>
+    <a href="https://mail.163.com/" target="_blank" style="font-size:12px; color:var(--primary); text-decoration:none; margin-left:8px;">📬 163郵箱</a>
+  </div>
+
+  <div id="setupWarning" class="setup-warning hidden">
+    ⚠️ 尚未設定 DeepSeek API Key，AI 功能無法使用。請前往 <a href="#" id="openOptionsLink">選項頁</a> 設定。
+  </div>
+
+  <div id="taskSelector" class="task-selector">
+    <label>目前任務</label>
+    <select id="taskTypeSelect">
+      <option value="newsBg">GFX - 新聞底圖</option>
+      <option value="transparent">GFX - 透明底圖</option>
+      <option value="mapStatic">GFX - 靜地圖</option>
+      <option value="mapAnimated">GFX - 動地圖</option>
+      <option value="ngb">NGB 任務（單次）</option>
+    </select>
+  </div>
+
+  <!-- GFX 面板 -->
+  <div id="gfxPanel">
+    <div class="card">
+      <div class="card-label">收件人</div>
+      <select id="recipientGroup"></select>
+      <input type="text" id="customRecipientGfx" placeholder="請輸入郵件地址，多個以逗號分隔" style="display:none; margin-top:8px;">
+    </div>
+
+    <div class="card">
+      <div class="card-label">📎 附件 (<span id="attachCount">0</span>)</div>
+      <div class="attachments" id="attachmentList"></div>
+      <div class="row" style="margin-top:8px;">
+        <button id="addLocalBtn" class="btn-secondary">📁 添加本地圖片</button>
+        <button id="addUrlBtn" class="btn-secondary">🔗 添加網頁圖片</button>
+      </div>
+      <input type="text" id="urlInput" placeholder="輸入圖片 URL" class="hidden" style="margin-top:8px;">
+      <button id="confirmUrlBtn" class="hidden btn-secondary">確認添加</button>
+    </div>
+
+    <div class="card">
+      <label>📝 自由提示（可輸入任意要求給 AI，或使用下方按鈕自動生成）</label>
+      <div class="row">
+        <input type="text" id="gfxDescription" placeholder="例如：請強調加急，必須15:00前完成" style="flex:1;">
+        <button id="gfxSuggestionBtn" class="btn-gold" style="flex:0 0 auto;">💡 AI建議</button>
+        <button id="gfxAnalyzeBtn" class="btn-gold" style="flex:0 0 auto;">🖼️ AI讀圖</button>
+      </div>
+
+      <label>🔖 SLUG（AI 建議可選）</label>
+      <input type="text" id="slug" placeholder="六字以內">
+
+      <label>💾 存放位置</label>
+      <div class="radio-group">
+        <label><input type="radio" name="storageLocation" value="H盤" checked> H盤</label>
+        <label><input type="radio" name="storageLocation" value="G盤"> G盤</label>
+      </div>
+
+      <label>⏰ 節目使用時間（可選）</label>
+      <input type="text" id="airTime" placeholder="系統自動推薦下個整點，可手動修改">
+
+      <label>📌 額外要求（如有地點、路線、動畫效果等需求，請在此詳細說明）</label>
+      <textarea id="extra" rows="3" placeholder="例如：地點、Key出地名、爆炸效果等"></textarea>
+    </div>
+
+    <div class="card">
+      <label>✉️ 主題</label>
+      <input type="text" id="gfxSubject" placeholder="可直接輸入主題">
+      <label>📄 正文</label>
+      <textarea id="gfxBody" rows="5" placeholder="可直接輸入正文內容"></textarea>
+    </div>
+
+    <div class="row">
+      <button id="gfxGenerateBtn" class="btn-primary">🤖 AI 生成郵件</button>
+      <button id="gfxSendBtn" class="btn-primary">✉️ 發送</button>
+      <button id="gfxClearBtn" class="btn-warning">🗑️ 清除隊列</button>
+    </div>
+  </div>
+
+  <!-- NGB 面板 -->
+  <div id="ngbPanel" class="hidden">
+    <div class="card">
+      <div class="card-label">收件人</div>
+      <select id="ngbRecipient"></select>
+      <input type="text" id="customRecipientNgb" placeholder="請輸入郵件地址，多個以逗號分隔" style="display:none; margin-top:8px;">
+    </div>
+
+    <div class="card">
+      <label>任務類型</label>
+      <input type="text" id="ngbTaskDisplay">
+      <label>連結</label>
+      <input type="text" id="ngbLink">
+      <label>📝 自由提示（可輸入任意要求給 AI，或使用下方按鈕自動生成）</label>
+      <div class="row">
+        <input type="text" id="ngbDescription" placeholder="點擊 AI 建議或手動輸入" style="flex:1;">
+        <button id="ngbSuggestionBtn" class="btn-gold" style="flex:0 0 auto;">💡 AI建議</button>
+      </div>
+      <label>💾 存放位置</label>
+      <div class="radio-group">
+        <label><input type="radio" name="ngbStorage" value="OTHER" checked> OTHER</label>
+        <label><input type="radio" name="ngbStorage" value="記者站"> 記者站</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>✉️ 主題</label>
+      <input type="text" id="ngbSubject" placeholder="可直接輸入主題">
+      <label>📄 正文</label>
+      <textarea id="ngbBody" rows="5" placeholder="可直接輸入正文內容"></textarea>
+    </div>
+
+    <div class="row">
+      <button id="ngbGenerateBtn" class="btn-primary">🤖 AI 生成郵件</button>
+      <button id="ngbSendBtn" class="btn-primary">✉️ 發送</button>
+    </div>
+  </div>
+
+  <div id="status"></div>
+  <input type="file" id="fileInput" multiple style="display:none" accept="image/*">
+
+  <div id="animationContainer">
+    <div class="anim-stage">
+      <div class="envelope"></div>
+      <div class="mailbox-anim"></div>
+      <div class="busy-figure"><div class="head"></div><div class="body"></div></div>
+      <div class="busy-figure" style="right:30px; top:15px;"><div class="head"></div><div class="body"></div></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
